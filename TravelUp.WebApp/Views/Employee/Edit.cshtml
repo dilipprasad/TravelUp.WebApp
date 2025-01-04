@@ -1,0 +1,110 @@
+﻿@model TravelUp.WebApp.Models.Employee
+
+@{
+    ViewData["Title"] = "Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h4>Edit Employee</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+
+        <!-- Form without asp-action; AJAX handles submission -->
+        <form id="editForm">
+            @Html.AntiForgeryToken()
+
+            <!-- Validation summary for server-side validation -->
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Employee ID (Read-only or hidden as needed) -->
+            <div class="form-group">
+                <label asp-for="Id" class="control-label"></label>
+                <input asp-for="Id" class="form-control" readonly />
+                <span asp-validation-for="Id" class="text-danger"></span>
+            </div>
+
+            <!-- Employee Name -->
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <!-- Employee Email -->
+            <div class="form-group">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <!-- Employee Address -->
+            <div class="form-group">
+                <label asp-for="Address" class="control-label"></label>
+                <input asp-for="Address" class="form-control" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+
+            <!-- Save Button -->
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+            // Handle form submission
+            $('#editForm').on('submit', function (e) {
+                e.preventDefault(); // Prevent standard form submission
+
+                // Gather form data
+                let employee = {
+                    Id: $('#Id').val(),
+                    Name: $('#Name').val(),
+                    Email: $('#Email').val(),
+                    Address: $('#Address').val()
+                };
+
+                // Retrieve anti-forgery token
+                let antiforgeryToken = $('input[name="__RequestVerificationToken"]').val();
+
+                // AJAX request
+                $.ajax({
+                    url: '/Employee/Edit', // Endpoint URL
+                    type: 'POST',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(employee),
+                    headers: {
+                        'RequestVerificationToken': antiforgeryToken
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            alert('Employee updated successfully!');
+                            window.location.href = '@Url.Action("Index", "Employee")';
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle errors
+                        if (xhr.status === 400) {
+                            alert('Validation failed: ' + xhr.responseText);
+                        } else {
+                            alert('An error occurred while updating the employee. Status: ' + xhr.status);
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+}

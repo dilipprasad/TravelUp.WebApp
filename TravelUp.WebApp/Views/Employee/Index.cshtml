@@ -1,0 +1,133 @@
+﻿@{
+    ViewData["Title"] = "Employees";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Employees</h2>
+
+<!-- Display success or error message -->
+@if (TempData["SuccessMessage"] != null)
+{
+        <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+        </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+        <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+        </div>
+}
+
+<div>
+    @Html.ActionLink("Create New Employee", "Create", "Employee", new { @class = "btn btn-primary mb-3" })
+</div>
+
+<!-- Container to hold the employee list (partial view content) -->
+<div id="employeeContainer" class="table-responsive"></div>
+
+<!-- No records found message -->
+<div id="noRecordsFound" class="alert alert-info text-center d-none">
+    No employees found.
+</div>
+
+<!-- Error message container -->
+<div id="errorMessage" class="alert alert-danger text-center d-none">
+    An error occurred while loading employees. Please try again later.
+</div>
+
+<!-- Pagination controls -->
+<div id="paginationControls" class="mt-3 d-flex justify-content-center align-items-center">
+    <button id="prevPageBtn" class="btn btn-secondary me-2 d-none">Previous</button>
+    <span id="pageInfo" class="mx-3"></span>
+    <button id="nextPageBtn" class="btn btn-secondary ms-2 d-none">Next</button>
+</div>
+
+<!-- Loader -->
+<div id="formLoader" class="d-none text-center">
+    <span class="spinner-border text-primary" role="status" aria-hidden="true"></span>
+    <span>Processing...</span>
+</div>
+
+@section Scripts {
+        <script src="~/lib/jquery/jquery.min.js"></script>
+
+        <script>
+            $(document).ready(function () {
+                let pageNumber = 1;
+                let pageSize = 5;
+
+                // Function to load employees via AJAX
+                function loadEmployees() {
+                    $.ajax({
+                        url: '/Employee/GetEmployeesPartial',
+                        type: 'GET',
+                        data: {
+                            pageNumber: pageNumber,
+                            pageSize: pageSize
+                        },
+                        success: function (response) {
+                            $('#employeeContainer').html(response);
+
+                            const employeeCount = $('#employeeContainer table tbody tr').length;
+
+                            if (employeeCount > 0) {
+                                $('#noRecordsFound').addClass('d-none');
+                                $('#errorMessage').addClass('d-none');
+
+                                $('#prevPageBtn').toggleClass('d-none', pageNumber === 1);
+                                $('#nextPageBtn').toggleClass('d-none', employeeCount < pageSize);
+                            } else {
+                                $('#employeeContainer').empty();
+                                $('#noRecordsFound').removeClass('d-none');
+                                $('#paginationControls').addClass('d-none');
+                            }
+
+                            $('#pageInfo').text('Page ' + pageNumber);
+                        },
+                        error: function () {
+                            $('#errorMessage').removeClass('d-none');
+                            $('#employeeContainer').empty();
+                            $('#paginationControls').addClass('d-none');
+                            $('#noRecordsFound').addClass('d-none');
+                        }
+                    });
+                }
+
+                $('#prevPageBtn').click(function () {
+                    if (pageNumber > 1) {
+                        pageNumber--;
+                        loadEmployees();
+                    }
+                });
+
+                $('#nextPageBtn').click(function () {
+                    pageNumber++;
+                    loadEmployees();
+                });
+
+                loadEmployees();
+
+                // Handle form submission
+                $('form').on('submit', function (e) {
+                    const $form = $(this);
+
+                    if ($form.data('submitted')) {
+                        e.preventDefault();
+                        return false;
+                    }
+
+                    $form.data('submitted', true);
+                    $('#formLoader').removeClass('d-none');
+                    $form.find('button[type="submit"]').prop('disabled', true);
+
+                    // Reset loader and submit state after the request completes
+                    $(this).ajaxComplete(function () {
+                        $('#formLoader').addClass('d-none');
+                        $form.data('submitted', false);
+                        $form.find('button[type="submit"]').prop('disabled', false);
+                    });
+                });
+            });
+        </script>
+}

@@ -1,0 +1,89 @@
+﻿@model TravelUp.WebApp.Models.Employee
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Create Employee</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form id="createEmployeeForm">
+            @Html.AntiForgeryToken()
+
+            <!-- Display error message dynamically -->
+            <div id="errorMessage" class="alert alert-danger d-none" role="alert">
+                <!-- Error message will appear here -->
+            </div>
+
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Employee Name -->
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <!-- Employee Email -->
+            <div class="form-group">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <!-- Employee Address -->
+            <div class="form-group">
+                <label asp-for="Address" class="control-label"></label>
+                <input asp-for="Address" class="form-control" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-group">
+                <button type="button" id="submitButton" class="btn btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#submitButton').click(function (e) {
+                e.preventDefault();
+
+                // Serialize form data
+                var formData = $('#createEmployeeForm').serialize();
+
+                // Send AJAX POST request
+                $.ajax({
+                    url: '@Url.Action("Create", "Employee")',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        if (response.success) {
+                            // Redirect to Index page on success
+                            window.location.href = '@Url.Action("Index", "Employee")';
+                        } else {
+                            // Show error message
+                            $('#errorMessage').text(response.message).removeClass('d-none');
+                        }
+                    },
+                    error: function (xhr) {
+                        // Handle server-side error
+                        var errorMessage = xhr.responseJSON?.message || 'An error occurred while creating the employee.';
+                        $('#errorMessage').text(errorMessage).removeClass('d-none');
+                    }
+                });
+            });
+        });
+    </script>
+}
