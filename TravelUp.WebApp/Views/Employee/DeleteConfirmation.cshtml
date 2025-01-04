@@ -1,37 +1,37 @@
 ﻿@model TravelUp.WebApp.Models.Employee
-
 @{
     ViewData["Title"] = "Delete Employee";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-
 <h4>Delete Employee</h4>
 <hr />
 <div class="row">
     <div class="col-md-6">
-        <!-- Display error message dynamically -->
-        <div id="errorMessage" class="alert alert-danger d-none" role="alert">
-            <!-- Error message will appear here -->
-        </div>
+        <!-- Add a form tag and include the antiforgery token -->
+        <form id="deleteForm">
+            @Html.AntiForgeryToken()
 
-        <!-- Display success message dynamically -->
-        <div id="successMessage" class="alert alert-success d-none" role="alert">
-            <!-- Success message will appear here -->
-        </div>
-
-        <!-- Employee details for deletion confirmation -->
-        <div id="employeeDetails">
-            <h5>Are you sure you want to delete this employee?</h5>
-            <p><strong>Name:</strong> @Model.Name</p>
-            <p><strong>Email:</strong> @Model.Email</p>
-            <p><strong>Address:</strong> @Model.Address</p>
-        </div>
-
-        <!-- Delete Confirmation Buttons -->
-        <div>
-            <button id="deleteButton" class="btn btn-danger">Delete</button>
-            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-        </div>
+            <!-- Display error message dynamically -->
+            <div id="errorMessage" class="alert alert-danger d-none" role="alert">
+                <!-- Error message will appear here -->
+            </div>
+            <!-- Display success message dynamically -->
+            <div id="successMessage" class="alert alert-success d-none" role="alert">
+                <!-- Success message will appear here -->
+            </div>
+            <!-- Employee details for deletion confirmation -->
+            <div id="employeeDetails">
+                <h5>Are you sure you want to delete this employee?</h5>
+                <p><strong>Name:</strong> @Model.Name</p>
+                <p><strong>Email:</strong> @Model.Email</p>
+                <p><strong>Address:</strong> @Model.Address</p>
+            </div>
+            <!-- Delete Confirmation Buttons -->
+            <div>
+                <button type="button" id="deleteButton" class="btn btn-danger">Delete</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -43,20 +43,24 @@
                 if (!confirm('Are you sure you want to delete this employee?')) {
                     return;
                 }
-
                 // Disable button to prevent duplicate requests
                 $('#deleteButton').prop('disabled', true);
+
+                // Get the antiforgery token
+                var token = $('input[name="__RequestVerificationToken"]').val();
 
                 // AJAX DELETE request
                 $.ajax({
                     url: '@Url.Action("Delete", "Employee")/' + '@Model.Id',
-                    type: 'DELETE',
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    },
                     success: function (response) {
                         if (response.success) {
                             $('#successMessage')
                                 .text('Employee deleted successfully.')
                                 .removeClass('d-none');
-
                             // Redirect to Index after a short delay
                             setTimeout(function () {
                                 window.location.href = '@Url.Action("Index", "Employee")';

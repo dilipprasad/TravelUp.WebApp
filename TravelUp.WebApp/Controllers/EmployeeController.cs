@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TravelUp.EmployeeAPI.Client.Interfaces;
 using TravelUp.WebApp.Models;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TravelUp.WebApp.Controllers
 {
@@ -29,6 +28,14 @@ namespace TravelUp.WebApp.Controllers
             return _mapper.Map<TravelUp.EmployeeAPI.Models.Employee>(employee);
         }
 
+        private PaginatedResponse<Employee> GetMappedEmployeeForView(EmployeeAPI.Models.PaginatedResponse<EmployeeAPI.Models.Employee> employees)
+        {
+            return _mapper.Map<PaginatedResponse<Employee>>(employees);
+        }
+        private Employee GetMappedEmployeeForView(EmployeeAPI.Models.Employee employees)
+        {
+            return _mapper.Map<Employee>(employees);
+        }
         #endregion
         public EmployeeController(IEmployeeApiService employeeProvider, IMapper mapper, ILogger<EmployeeController> logger)
             : base(logger)
@@ -60,7 +67,7 @@ namespace TravelUp.WebApp.Controllers
             try
             {
                 var employees = await _employeeProvider.GetEmployeesAsync(pageNumber, pageSize);
-                var mappedEmp = _mapper.Map<PaginatedResponse<Employee>>(employees);
+                PaginatedResponse<Employee> mappedEmp = GetMappedEmployeeForView(employees);
                 return PartialView("_EmployeeTablePartial", mappedEmp);
             }
             catch (Exception ex)
@@ -172,8 +179,8 @@ namespace TravelUp.WebApp.Controllers
         }
 
 
-        [HttpDelete()]
-        public async Task<IActionResult> Delete(Guid id)
+        [HttpGet("DeleteConfirmation/{id}")]
+        public async Task<IActionResult> DeleteConfirmation(Guid id)
         {
             try
             {
@@ -182,13 +189,8 @@ namespace TravelUp.WebApp.Controllers
                 {
                     return HandleEmployeeNotFound(id);
                 }
-
-                return Ok(new
-                {
-                    Success = true,
-                    Message = "Employee fetched successfully.",
-                    Data = employee
-                });
+                var mappedEmp = GetMappedEmployeeForView(employee);
+                return View("DeleteConfirmation", mappedEmp);
             }
             catch (Exception ex)
             {
@@ -197,9 +199,9 @@ namespace TravelUp.WebApp.Controllers
             }
         }
 
-        [HttpDelete, ActionName("Delete")]
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             try
             {
