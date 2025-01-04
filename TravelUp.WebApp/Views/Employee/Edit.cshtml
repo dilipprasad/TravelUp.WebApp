@@ -9,7 +9,6 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-
         <!-- Form without asp-action; AJAX handles submission -->
         <form id="editForm">
             @Html.AntiForgeryToken()
@@ -17,37 +16,45 @@
             <!-- Validation summary for server-side validation -->
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
+            <!-- Alert for AJAX errors -->
+            <div id="errorMessage" class="alert alert-danger d-none" role="alert">
+                <!-- Error message will appear here -->
+            </div>
+
             <!-- Employee ID (Read-only or hidden as needed) -->
             <div class="form-group">
                 <label asp-for="Id" class="control-label"></label>
-                <input asp-for="Id" class="form-control" readonly />
-                <span asp-validation-for="Id" class="text-danger"></span>
+                <input asp-for="Id" class="form-control" readonly aria-describedby="IdError" />
+                <span asp-validation-for="Id" id="IdError" class="text-danger" role="alert"></span>
             </div>
 
             <!-- Employee Name -->
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+                <input asp-for="Name" class="form-control" aria-describedby="NameError" />
+                <span asp-validation-for="Name" id="NameError" class="text-danger" role="alert"></span>
             </div>
 
             <!-- Employee Email -->
             <div class="form-group">
                 <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
+                <input asp-for="Email" class="form-control" aria-describedby="EmailError" />
+                <span asp-validation-for="Email" id="EmailError" class="text-danger" role="alert"></span>
             </div>
 
             <!-- Employee Address -->
             <div class="form-group">
                 <label asp-for="Address" class="control-label"></label>
-                <input asp-for="Address" class="form-control" />
-                <span asp-validation-for="Address" class="text-danger"></span>
+                <input asp-for="Address" class="form-control" aria-describedby="AddressError" />
+                <span asp-validation-for="Address" id="AddressError" class="text-danger" role="alert"></span>
             </div>
 
             <!-- Save Button -->
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                <button type="submit" id="submitButton" class="btn btn-primary">
+                    <span id="submitText">Save</span>
+                    <span id="loadingSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
             </div>
         </form>
     </div>
@@ -66,6 +73,14 @@
             // Handle form submission
             $('#editForm').on('submit', function (e) {
                 e.preventDefault(); // Prevent standard form submission
+
+                // Clear previous error message
+                $('#errorMessage').addClass('d-none').text('');
+
+                // Disable submit button and show loading spinner
+                $('#submitButton').prop('disabled', true);
+                $('#loadingSpinner').removeClass('d-none');
+                $('#submitText').addClass('d-none');
 
                 // Gather form data
                 let employee = {
@@ -92,16 +107,20 @@
                             alert('Employee updated successfully!');
                             window.location.href = '@Url.Action("Index", "Employee")';
                         } else {
-                            alert('Error: ' + response.message);
+                            // Show error message
+                            $('#errorMessage').text(response.message || 'An error occurred.').removeClass('d-none');
                         }
                     },
                     error: function (xhr) {
                         // Handle errors
-                        if (xhr.status === 400) {
-                            alert('Validation failed: ' + xhr.responseText);
-                        } else {
-                            alert('An error occurred while updating the employee. Status: ' + xhr.status);
-                        }
+                        let errorMessage = xhr.responseJSON?.message || 'An error occurred while updating the employee.';
+                        $('#errorMessage').text(errorMessage).removeClass('d-none');
+                    },
+                    complete: function () {
+                        // Re-enable submit button and hide loading spinner
+                        $('#submitButton').prop('disabled', false);
+                        $('#loadingSpinner').addClass('d-none');
+                        $('#submitText').removeClass('d-none');
                     }
                 });
             });

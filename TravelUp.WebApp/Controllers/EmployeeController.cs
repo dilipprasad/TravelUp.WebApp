@@ -92,21 +92,21 @@ namespace TravelUp.WebApp.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    return View(employee);
+                    return Json(new { success = false, message = "Invalid model state" });
                 }
 
                 var mappedEmp = GetMappedEmployeeForAPI(employee);
                 await _employeeProvider.CreateEmployeeAsync(mappedEmp);
-                return RedirectToAction(nameof(Index));
+
+                return Json(new { success = true, message = "Employee created successfully" });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating employee.");
-                return HandleExceptionResponse(ex, "An error occurred while creating the employee.");
+                return Json(new { success = false, message = "An error occurred while creating the employee." });
             }
         }
 
-       
 
         public async Task<IActionResult> Edit(Guid id)
         {

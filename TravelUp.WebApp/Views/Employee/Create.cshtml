@@ -5,45 +5,45 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Create Employee</h1>
-
+<h4>Create Employee</h4>
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form id="createEmployeeForm">
+        <form id="createForm">
             @Html.AntiForgeryToken()
 
-            <!-- Display error message dynamically -->
-            <div id="errorMessage" class="alert alert-danger d-none" role="alert">
-                <!-- Error message will appear here -->
-            </div>
-
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div id="errorMessage" class="alert alert-danger d-none" role="alert">
+            </div>
 
             <!-- Employee Name -->
             <div class="form-group">
                 <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+                <input asp-for="Name" name="Name" class="form-control" aria-describedby="NameError" />
+                <span asp-validation-for="Name" id="NameError" class="text-danger" role="alert"></span>
             </div>
 
             <!-- Employee Email -->
             <div class="form-group">
                 <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
+                <input asp-for="Email" name="Email" class="form-control" aria-describedby="EmailError" />
+                <span asp-validation-for="Email" id="EmailError" class="text-danger" role="alert"></span>
             </div>
 
             <!-- Employee Address -->
             <div class="form-group">
                 <label asp-for="Address" class="control-label"></label>
-                <input asp-for="Address" class="form-control" />
-                <span asp-validation-for="Address" class="text-danger"></span>
+                <input asp-for="Address" name="Address" class="form-control" aria-describedby="AddressError" />
+                <span asp-validation-for="Address" id="AddressError" class="text-danger" role="alert"></span>
             </div>
 
-            <!-- Submit Button -->
+            <!-- Save Button -->
             <div class="form-group">
-                <button type="button" id="submitButton" class="btn btn-primary">Create</button>
+                <button type="submit" id="submitButton" class="btn btn-primary">
+                    <span id="submitText">Create</span>
+                    <span id="loadingSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
             </div>
         </form>
     </div>
@@ -54,23 +54,36 @@
 </div>
 
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+
     <script>
         $(document).ready(function () {
-            $('#submitButton').click(function (e) {
+            $('#createForm').on('submit', function (e) {
                 e.preventDefault();
 
-                // Serialize form data
-                var formData = $('#createEmployeeForm').serialize();
+                // Clear previous error message
+                $('#errorMessage').addClass('d-none').text('');
 
-                // Send AJAX POST request
+                // Show loading state
+                $('#submitButton').prop('disabled', true);
+                $('#loadingSpinner').removeClass('d-none');
+                $('#submitText').addClass('d-none');
+
+                // Get form data
+                var formData = new FormData(this);
+
+                // AJAX request
                 $.ajax({
                     url: '@Url.Action("Create", "Employee")',
                     type: 'POST',
                     data: formData,
+                    processData: false,
+                    contentType: false,
                     success: function (response) {
                         if (response.success) {
-                            // Redirect to Index page on success
+                            // Store success message and redirect
+                            sessionStorage.setItem('employeeMessage', response.message);
                             window.location.href = '@Url.Action("Index", "Employee")';
                         } else {
                             // Show error message
@@ -78,9 +91,15 @@
                         }
                     },
                     error: function (xhr) {
-                        // Handle server-side error
+                        // Handle error
                         var errorMessage = xhr.responseJSON?.message || 'An error occurred while creating the employee.';
                         $('#errorMessage').text(errorMessage).removeClass('d-none');
+                    },
+                    complete: function () {
+                        // Reset loading state
+                        $('#submitButton').prop('disabled', false);
+                        $('#loadingSpinner').addClass('d-none');
+                        $('#submitText').removeClass('d-none');
                     }
                 });
             });
